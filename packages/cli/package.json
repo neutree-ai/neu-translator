@@ -1,0 +1,29 @@
+{
+  "name": "cli",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "dev": "tsx -r dotenv/config src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "devDependencies": {
+    "@types/node": "^24.2.1",
+    "@types/react": "^19.1.9",
+    "dotenv": "^17.2.1",
+    "tsx": "^4.20.3",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "@inkjs/ui": "^2.0.0",
+    "@types/js-yaml": "^4.0.9",
+    "core": "*",
+    "external-editor": "^3.1.0",
+    "ink": "^6.1.0",
+    "js-yaml": "^4.1.0",
+    "react": "^19.1.1"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "name": "core",
+  "private": true,
+  "type": "module",
+  "module": "dist/index.js",
+  "main": "dist/index.js",
+  "types": "src/index.ts",
+  "version": "1.0.0",
+  "license": "MIT",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "devDependencies": {
+    "dotenv": "^17.2.1",
+    "tsx": "^4.20.3",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "@ai-sdk/openai-compatible": "^1.0.3",
+    "@opentelemetry/auto-instrumentations-node": "^0.62.1",
+    "@opentelemetry/sdk-node": "^0.203.0",
+    "ai": "^5.0.8",
+    "langfuse-vercel": "^3.38.4",
+    "zod": "^4.0.16"
+  }
+}

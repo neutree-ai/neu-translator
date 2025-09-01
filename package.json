@@ -1,0 +1,9 @@
+{
+  "name": "neu-translator",
+  "private": true,
+  "workspaces": ["packages/*"],
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Yanzhen Yu <yanzhen@smartx.com>",
+  "license": "MIT"
+}
