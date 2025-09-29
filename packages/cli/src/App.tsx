@@ -30,18 +30,23 @@ const TUIApp = () => {
   } = useAgent();
 
   const { isEditing, withEditor } = useEditor();
+
+  const { handleUserInput, cmd, exitCmd } = useUserInput({
+    submitAgent,
+  });
+
   useInput((_, key) => {
     if (isEditing) {
+      return;
+    }
+
+    if (cmd.value) {
       return;
     }
 
     if (key.escape) {
       stop();
     }
-  });
-
-  const { handleUserInput, cmd, exitCmd } = useUserInput({
-    submitAgent,
   });
 
   if (isEditing) {

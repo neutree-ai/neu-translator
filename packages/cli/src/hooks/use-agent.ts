@@ -131,6 +131,14 @@ export const useAgent = () => {
     setCurrentActor("user");
   };
 
+  const compact = useCallback(async () => {
+    if (!agentLoopRef.current) {
+      return;
+    }
+
+    return agentLoopRef.current.compact();
+  }, []);
+
   return {
     messages,
     currentActor,
@@ -141,5 +149,6 @@ export const useAgent = () => {
     finishCopilotRequest,
     stop,
     memoryRef: memoryRef,
+    compact,
   };
 };

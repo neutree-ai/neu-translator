@@ -3,6 +3,7 @@ import { Box, Text, useInput } from "ink";
 import { TranslationCommand } from "./TranslationCommand.js";
 import { commands, CommandType } from "./all-commands.js";
 import { MemoryCommand } from "./MemoryCommand.js";
+import { CompactCommand } from "./CompactCommand.js";
 
 type CommandProps = {
   cmd: {
@@ -32,6 +33,9 @@ export const Command: React.FC<CommandProps> = ({ cmd, exitCmd }) => {
           case CommandType.Memory:
           case commands[CommandType.Memory].short:
             return <MemoryCommand />;
+          case CommandType.Compact:
+          case commands[CommandType.Compact].short:
+            return <CompactCommand />;
           default:
             return (
               <Box>

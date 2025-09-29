@@ -57,6 +57,10 @@ export class AgentLoop {
     return this.context.getMessages();
   }
 
+  public async compact() {
+    return await this.context.compact();
+  }
+
   private async _next(): Promise<{
     messages: ModelMessage[];
     actor: NextActor;
