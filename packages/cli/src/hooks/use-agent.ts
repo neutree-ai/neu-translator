@@ -1,38 +1,43 @@
-import {
-  AgentLoop,
-  CopilotRequest,
-  CopilotResponse,
-  ModelMessage,
-  ToolCallPart,
-  Memory,
-} from "core";
-import { useCallback, useRef, useState } from "react";
+import { AgentLoop, CopilotResponse, Memory } from "core";
+import { createRef, useCallback, useRef } from "react";
+import { useAgentStore } from "./use-agent-store.js";
+
+const agentLoopRef = createRef<AgentLoop>();
+agentLoopRef.current = null;
+
+const copilotResolverRef =
+  createRef<(value: CopilotResponse | PromiseLike<CopilotResponse>) => void>();
+copilotResolverRef.current = null;
+
+const runningRef = createRef<boolean>();
+runningRef.current = false;
+
+const memoryRef = createRef<Memory>();
+memoryRef.current = new Memory();
+
+const abortController = createRef<AbortController | null>();
+abortController.current = null;
 
 export const useAgent = () => {
-  const [messages, setMessages] = useState<ModelMessage[]>([]);
-  const [unprocessedToolCalls, setUnprocessedToolCalls] = useState<
-    ToolCallPart[]
-  >([]);
-  const [currentActor, setCurrentActor] = useState("user");
+  const messages = useAgentStore((s) => s.messages);
+  const setMessages = useAgentStore((s) => s.setMessages);
 
-  const [copilotRequest, setCopilotRequest] = useState<CopilotRequest | null>(
-    null
+  const unprocessedToolCalls = useAgentStore((s) => s.unprocessedToolCalls);
+  const setUnprocessedToolCalls = useAgentStore(
+    (s) => s.setUnprocessedToolCalls
   );
-  const copilotResolverRef =
-    useRef<
-      (value: CopilotResponse | PromiseLike<CopilotResponse>) => void | null
-    >(null);
 
-  const agentLoopRef = useRef<AgentLoop | null>(null);
-  const runningRef = useRef(false);
-  const abortController = useRef<AbortController | null>(null);
+  const currentActor = useAgentStore((s) => s.currentActor);
+  const setCurrentActor = useAgentStore((s) => s.setCurrentActor);
+
+  const copilotRequest = useAgentStore((s) => s.copilotRequest);
+  const setCopilotRequest = useAgentStore((s) => s.setCopilotRequest);
 
   const initAgentLoop = useCallback(async () => {
     if (!agentLoopRef.current) {
       abortController.current = new AbortController();
 
-      const memory = new Memory();
-      await memory.init();
+      await memoryRef.current?.init();
 
       agentLoopRef.current = new AgentLoop({
         abortSignal: abortController.current.signal,
@@ -43,7 +48,7 @@ export const useAgent = () => {
             copilotResolverRef.current = resolve;
           });
         },
-        memory,
+        memory: memoryRef.current!,
       });
 
       process.addListener("SIGINT", () => {
@@ -135,5 +140,6 @@ export const useAgent = () => {
     copilotResolverRef,
     finishCopilotRequest,
     stop,
+    memoryRef: memoryRef,
   };
 };

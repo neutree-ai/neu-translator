@@ -1,5 +1,5 @@
 import React from "react";
-import { render, Box, useInput, Text } from "ink";
+import { render, Box, useInput } from "ink";
 import { metricsSdk } from "core";
 import { Hello } from "./components/Hello.js";
 import { CopilotRequestHandler } from "./components/CopilotRequestHandler.js";
@@ -7,8 +7,8 @@ import { UserInputArea } from "./components/UserInputArea.js";
 import { MessagesList } from "./components/MessageList.js";
 import { useAgent } from "./hooks/use-agent.js";
 import { useEditor } from "./hooks/use-editor.js";
-import { useTranslationState } from "./hooks/use-translation-state.js";
 import { useUserInput } from "./hooks/use-user-input.js";
+import { Command } from "./components/commands/Command.js";
 
 metricsSdk.start();
 
@@ -40,9 +40,7 @@ const TUIApp = () => {
     }
   });
 
-  const { currentFile, currentTranslation } = useTranslationState(messages);
-
-  const { handleUserInput, cmd } = useUserInput({
+  const { handleUserInput, cmd, exitCmd } = useUserInput({
     submitAgent,
   });
 
@@ -57,18 +55,13 @@ const TUIApp = () => {
         copilotResolverRef={copilotResolverRef}
         withEditor={withEditor}
         onFinish={finishCopilotRequest}
-        currentFile={currentFile}
-        currentTranslation={currentTranslation}
+        messages={messages}
       />
     );
   }
 
-  if (cmd === "translation") {
-    return (
-      <Box borderStyle="classic">
-        <Text>{currentTranslation.translated}</Text>
-      </Box>
-    );
+  if (cmd.value) {
+    return <Command cmd={cmd} exitCmd={exitCmd} />;
   }
 
   return (

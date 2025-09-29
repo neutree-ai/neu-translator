@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Box, Text } from "ink";
 import { edit } from "external-editor";
 import { Select } from "@inkjs/ui";
-import { CopilotRequest, CopilotResponse } from "core";
+import { CopilotRequest, CopilotResponse, ModelMessage } from "core";
+import { useTranslationState } from "../hooks/use-translation-state.js";
 
 type CopilotRequestHandlerProps = {
   copilotRequest: CopilotRequest;
@@ -11,11 +12,7 @@ type CopilotRequestHandlerProps = {
   >;
   withEditor: (fn: () => string) => Promise<string>;
   onFinish: () => void;
-  currentFile: string | null;
-  currentTranslation: {
-    src: string;
-    translated: string;
-  };
+  messages: ModelMessage[];
 };
 
 // Helper function to truncate text and show context around target
@@ -93,10 +90,11 @@ export const CopilotRequestHandler = ({
   copilotResolverRef,
   withEditor,
   onFinish,
-  currentFile,
-  currentTranslation,
+  messages,
 }: CopilotRequestHandlerProps) => {
   const [invalid, setInvalid] = useState("");
+
+  const { currentFile, currentTranslation } = useTranslationState(messages);
 
   useEffect(() => {
     if (!currentFile) {

@@ -5,7 +5,10 @@ export const useUserInput = ({
 }: {
   submitAgent: (input: string) => unknown;
 }) => {
-  const [cmd, setCmd] = useState("");
+  const [cmd, setCmd] = useState({
+    indicator: false,
+    value: "",
+  });
 
   const handleUserInput = useCallback((input: string) => {
     if (!input.trim()) {
@@ -13,10 +16,13 @@ export const useUserInput = ({
     }
 
     if (input.startsWith("/")) {
-      const cmd = input.slice(1).trim();
+      const value = input.slice(1).trim();
 
-      if (cmd) {
-        setCmd(cmd);
+      if (value) {
+        setCmd({
+          indicator: true,
+          value,
+        });
         return;
       }
     }
@@ -26,6 +32,11 @@ export const useUserInput = ({
 
   return {
     cmd,
+    exitCmd: () =>
+      setCmd({
+        indicator: false,
+        value: "",
+      }),
     handleUserInput,
   };
 };

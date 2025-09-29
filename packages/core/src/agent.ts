@@ -91,7 +91,7 @@ export class AgentLoop {
 
     const { response, toolCalls, finishReason } = await generateText({
       system: SYSTEM_WORKFLOW({
-        currentMemory: this.options.memory?.current ?? "",
+        currentMemory: this.options.memory?.provideMemory() || "",
       }),
       model: models.translator,
       messages: modelMessages,
