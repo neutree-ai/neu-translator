@@ -9,6 +9,11 @@ export class Context<T extends ModelMessage = ModelMessage> {
   private messages: T[] = [];
   private activeMessages: T[] = [];
 
+  constructor(messages: T[] = []) {
+    this.messages = messages.slice();
+    this.activeMessages = messages.slice();
+  }
+
   addMessages(messages: T[]) {
     this.messages.push(...messages);
     this.activeMessages.push(...messages);

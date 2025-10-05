@@ -1,0 +1,16 @@
+{
+  "name": "react-shared",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "main": "src/index.ts",
+  "module": "src/mod.ts",
+  "license": "MIT",
+  "dependencies": {
+    "core": "*",
+    "zustand": "^5.0.8"
+  },
+  "peerDependencies": {
+    "react": "^19.1.1"
+  }
+}

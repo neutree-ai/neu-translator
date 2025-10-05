@@ -79,6 +79,7 @@ const TUIApp = () => {
           unprocessedToolCalls={unprocessedToolCalls}
         />
       )}
+
       <UserInputArea
         currentActor={currentActor}
         onSubmit={handleUserInput}

@@ -1,6 +1,6 @@
 import { AgentLoop, CopilotResponse, Memory } from "core";
-import { createRef, useCallback, useRef } from "react";
-import { useAgentStore } from "./use-agent-store.js";
+import { createRef, useCallback } from "react";
+import { useAgentStore } from "react-shared";
 
 const agentLoopRef = createRef<AgentLoop>();
 agentLoopRef.current = null;
@@ -57,7 +57,7 @@ export const useAgent = () => {
         process.exit(0);
       });
     }
-  }, []);
+  }, [setCopilotRequest]);
 
   const doNext = useCallback(async () => {
     if (!agentLoopRef.current) {
@@ -91,7 +91,7 @@ export const useAgent = () => {
         break;
       }
     }
-  }, []);
+  }, [initAgentLoop, setCurrentActor, setMessages, setUnprocessedToolCalls]);
 
   const submitAgent = async (input: string) => {
     runningRef.current = true;

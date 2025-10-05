@@ -1,11 +1,12 @@
+import type { ModelMessage, ToolCallPart, CopilotRequest } from "core";
 import { create } from "zustand";
-import { ModelMessage, ToolCallPart, CopilotRequest } from "core";
 
 type Actor = "user" | "agent";
 
 type AgentState = {
   messages: ModelMessage[];
   setMessages: (v: ModelMessage[]) => void;
+  addMessages: (v: ModelMessage[]) => void;
 
   unprocessedToolCalls: ToolCallPart[];
   setUnprocessedToolCalls: (v: ToolCallPart[]) => void;
@@ -20,6 +21,10 @@ type AgentState = {
 export const useAgentStore = create<AgentState>((set) => ({
   messages: [],
   setMessages: (v) => set({ messages: v }),
+  addMessages: (v) =>
+    set((state) => ({
+      messages: state.messages.concat(v),
+    })),
 
   unprocessedToolCalls: [],
   setUnprocessedToolCalls: (v) => set({ unprocessedToolCalls: v }),

@@ -4,6 +4,6 @@
   "workspaces": ["packages/*"],
   "version": "1.0.0",
   "main": "index.js",
-  "author": "Yanzhen Yu <yanzhen@smartx.com>",
+  "author": "Yanzhen Yu <yanzhen@arcfra.com>",
   "license": "MIT"
 }

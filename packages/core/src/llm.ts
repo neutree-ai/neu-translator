@@ -32,7 +32,6 @@ function extractTagContent(input: string, tag: string): string {
   const firstOpen = openRe.exec(input);
   if (!firstOpen) return "";
 
-  const startIdx = firstOpen.index;
   const startEnd = openRe.lastIndex;
   let depth = 1;
 
@@ -44,14 +43,12 @@ function extractTagContent(input: string, tag: string): string {
 
     if (nextOpen && nextOpen.index < nextClose.index) {
       depth++;
-      continue;
     } else {
       depth--;
       if (depth === 0) {
         const endIdx = nextClose.index;
         return input.slice(startEnd, endIdx).trim();
       }
-      continue;
     }
   }
 }

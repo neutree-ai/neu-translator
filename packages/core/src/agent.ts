@@ -1,15 +1,15 @@
 import {
-  FinishReason,
+  type FinishReason,
   generateText,
-  ModelMessage,
-  ToolCallPart,
-  ToolResultPart,
-  ToolSet,
-  UserModelMessage,
+  type ModelMessage,
+  type ToolCallPart,
+  type ToolResultPart,
+  type ToolSet,
+  type UserModelMessage,
 } from "ai";
 import { models } from "./llm.js";
 import { Context } from "./context.js";
-import { AgentLoopOptions, NextActor, ToolExecutor } from "./types.js";
+import type { AgentLoopOptions, NextActor, ToolExecutor } from "./types.js";
 import { SYSTEM_WORKFLOW } from "./prompts/system.workflow.js";
 import { translateExecutor, translateTool } from "./tools/translate-tool.js";
 import { lsExecutor, lsTool } from "./tools/ls-tool.js";
@@ -22,9 +22,9 @@ export class AgentLoop {
   private toolDefs: ToolSet;
   private toolExecutors: Record<string, ToolExecutor>;
 
-  constructor(options: AgentLoopOptions = {}) {
+  constructor(options: AgentLoopOptions = {}, messages: ModelMessage[] = []) {
     this.options = options;
-    this.context = new Context();
+    this.context = new Context(messages);
     this.toolDefs = {
       translate: translateTool,
       ls: lsTool,
@@ -42,11 +42,13 @@ export class AgentLoop {
   public async next(): Promise<{
     actor: NextActor;
     unprocessedToolCalls: ToolCallPart[];
+    messages: ModelMessage[];
+    finishReason?: FinishReason;
   }> {
-    const { messages, actor } = await this._next();
+    const { messages, actor, finishReason } = await this._next();
     this.context.addMessages(messages);
     const unprocessedToolCalls = await this.getUnprocessedToolCalls();
-    return { actor, unprocessedToolCalls };
+    return { actor, unprocessedToolCalls, messages, finishReason };
   }
 
   public async userInput(messages: UserModelMessage[]) {
