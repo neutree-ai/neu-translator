@@ -1,6 +1,6 @@
 import { generateText } from "ai";
 import { writeFile, readFile } from "fs/promises";
-import { CopilotRequest, CopilotResponse } from "./types.js";
+import type { CopilotRequest, CopilotResponse } from "./types.js";
 import { extractJson, models } from "./llm.js";
 import { SYSTEM_MEMORY } from "./prompts/system.memory.js";
 
@@ -54,12 +54,12 @@ export class Memory {
             break;
           case "delete":
             this.current = this.current.filter(
-              (item) => item.index !== op.index
+              (item) => item.index !== op.index,
             );
             break;
-          case "update":
+          case "update": {
             const index = this.current.findIndex(
-              (item) => item.index === op.index
+              (item) => item.index === op.index,
             );
             if (index !== -1) {
               this.current[index] = {
@@ -69,6 +69,7 @@ export class Memory {
               };
             }
             break;
+          }
           default:
         }
       }

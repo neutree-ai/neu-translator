@@ -1,5 +1,5 @@
-import { JSONValue, ModelMessage } from "ai";
-import { Memory } from "./memory.js";
+import type { JSONValue } from "ai";
+import type { Memory } from "./memory.js";
 
 export {
   ModelMessage,

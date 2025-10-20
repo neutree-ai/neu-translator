@@ -1,4 +1,4 @@
-import { CopilotRequest, CopilotResponse } from "../types.js";
+import type { CopilotRequest, CopilotResponse } from "../types.js";
 
 export const SYSTEM_MEMORY = ({
   req,

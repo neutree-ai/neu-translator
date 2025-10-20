@@ -81,7 +81,7 @@ export class AgentLoop {
     const unprocessedToolCalls = await this.getUnprocessedToolCalls();
     if (unprocessedToolCalls.length > 0) {
       const toolResults = await Promise.all(
-        unprocessedToolCalls.map((call) => this.executeTool(call))
+        unprocessedToolCalls.map((call) => this.executeTool(call)),
       );
 
       return {

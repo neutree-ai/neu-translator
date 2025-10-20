@@ -1,6 +1,6 @@
 import { tool } from "ai";
 import { z } from "zod";
-import { ToolExecutor } from "../types.js";
+import type { ToolExecutor } from "../types.js";
 
 const description = `Create translation units for documents to be translated. According to the current context's requirements, select a limited amount of text each time for translation. During translation, follow the user's requirements including target language, tone, and terminology.
 
@@ -28,7 +28,7 @@ const outputSchema = z.object({
   status: z
     .string()
     .describe(
-      "The status of human review, one of 'approve', 'reject', or 'refined'"
+      "The status of human review, one of 'approve', 'reject', or 'refined'",
     ),
   reason: z.string().describe("The reason for the status, if applicable"),
 });

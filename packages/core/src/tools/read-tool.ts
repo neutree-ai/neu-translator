@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { readFile } from "fs/promises";
-import { ToolExecutor } from "../types.js";
+import type { ToolExecutor } from "../types.js";
 
 const description = `Reads a file from the local filesystem. You can access any file directly by using this tool.
 
@@ -45,7 +45,7 @@ export const readExecutor: ToolExecutor<
     throw new Error(
       `Failed to read file: ${
         error instanceof Error ? error.message : String(error)
-      }`
+      }`,
     );
   }
 };

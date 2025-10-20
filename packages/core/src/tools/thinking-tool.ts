@@ -1,6 +1,6 @@
 import { tool } from "ai";
 import { z } from "zod";
-import { ToolExecutor } from "../types.js";
+import type { ToolExecutor } from "../types.js";
 
 const description = `Use this tool to output your thoughts step by step, which can be used to generate a plan or outline.`;
 
