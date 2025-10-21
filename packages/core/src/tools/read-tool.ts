@@ -1,6 +1,6 @@
+import { readFile } from "node:fs/promises";
 import { tool } from "ai";
 import { z } from "zod";
-import { readFile } from "fs/promises";
 import type { ToolExecutor } from "../types.js";
 
 const description = `Reads a file from the local filesystem. You can access any file directly by using this tool.
@@ -40,12 +40,15 @@ export const readExecutor: ToolExecutor<
 > = async (input) => {
   try {
     const content = await readFile(input.file_path, "utf-8");
-    return { content };
+    return {
+      type: "tool-result",
+      payload: { content },
+    };
   } catch (error) {
     throw new Error(
       `Failed to read file: ${
         error instanceof Error ? error.message : String(error)
-      }`,
+      }`
     );
   }
 };

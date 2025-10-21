@@ -1,8 +1,8 @@
+import { readFile, writeFile } from "node:fs/promises";
 import { generateText } from "ai";
-import { writeFile, readFile } from "fs/promises";
-import type { CopilotRequest, CopilotResponse } from "./types.js";
 import { extractJson, models } from "./llm.js";
 import { SYSTEM_MEMORY } from "./prompts/system.memory.js";
+import type { CopilotRequest, CopilotResponse } from "./types.js";
 
 const persistentFile = "./memory.json";
 
@@ -54,12 +54,12 @@ export class Memory {
             break;
           case "delete":
             this.current = this.current.filter(
-              (item) => item.index !== op.index,
+              (item) => item.index !== op.index
             );
             break;
           case "update": {
             const index = this.current.findIndex(
-              (item) => item.index === op.index,
+              (item) => item.index === op.index
             );
             if (index !== -1) {
               this.current[index] = {

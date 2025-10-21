@@ -4,9 +4,11 @@ import {
   COMPACT_INSTRUCTION,
   SYSTEM_COMPACT,
 } from "./prompts/system.compact.js";
+import type { CopilotResponse } from "./types.js";
 
 export class Context<T extends ModelMessage = ModelMessage> {
   private messages: T[] = [];
+  private copilotResponses: CopilotResponse[] = [];
   private activeMessages: T[] = [];
 
   constructor(messages: T[] = []) {
@@ -19,8 +21,18 @@ export class Context<T extends ModelMessage = ModelMessage> {
     this.activeMessages.push(...messages);
   }
 
+  addCopilotResponses(responses: CopilotResponse[]) {
+    this.copilotResponses.push(...responses);
+  }
+
   getMessages(): T[] {
     return this.messages;
+  }
+
+  getCopilotResponses(toolCallIds: string[]): CopilotResponse[] {
+    return this.copilotResponses.filter((resp) =>
+      toolCallIds.includes(resp.tool.callId)
+    );
   }
 
   toModelMessages(): ModelMessage[] {

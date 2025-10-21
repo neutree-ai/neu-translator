@@ -26,13 +26,13 @@ export const useAgent = () => {
   const currentActor = useAgentStore((s) => s.currentActor);
   const setCurrentActor = useAgentStore((s) => s.setCurrentActor);
 
-  const copilotRequest = useAgentStore((s) => s.copilotRequest);
-  const setCopilotRequest = useAgentStore((s) => s.setCopilotRequest);
+  const copilotRequests = useAgentStore((s) => s.copilotRequests);
+  const setCopilotRequests = useAgentStore((s) => s.setCopilotRequests);
 
   const doNext = async (
     params:
       | { type: "userInput"; input: string }
-      | { type: "copilot"; response: CopilotResponse }
+      | { type: "copilot"; responses: CopilotResponse[] }
   ) => {
     setCurrentActor("agent");
 
@@ -46,8 +46,8 @@ export const useAgent = () => {
         if (round === 1) {
           Object.assign(body, {
             userInput: params.type === "userInput" ? params.input : undefined,
-            copilotResponse:
-              params.type === "copilot" ? params.response : undefined,
+            copilotResponses:
+              params.type === "copilot" ? params.responses : undefined,
           });
         }
 
@@ -70,17 +70,20 @@ export const useAgent = () => {
 
         sessionIdRef.current = sessionId;
 
-        if (agentResponse.type === "copilot") {
-          setCopilotRequest(agentResponse.result);
+        if (
+          agentResponse.copilotRequests &&
+          agentResponse.copilotRequests.length > 0
+        ) {
+          setCopilotRequests(agentResponse.copilotRequests);
           break;
         } else {
-          setCurrentActor(agentResponse.result.actor);
+          setCurrentActor(agentResponse.actor);
 
-          addMessages(agentResponse.result.messages);
+          addMessages(agentResponse.messages);
 
-          setUnprocessedToolCalls(agentResponse.result.unprocessedToolCalls);
+          setUnprocessedToolCalls(agentResponse.unprocessedToolCalls);
 
-          if (agentResponse.result.actor === "user") {
+          if (agentResponse.actor === "user") {
             break;
           }
         }
@@ -118,11 +121,11 @@ export const useAgent = () => {
     });
   };
 
-  const finishCopilotRequest = async (copilotResponse: CopilotResponse) => {
-    setCopilotRequest(null);
+  const finishCopilotRequest = async (copilotResponses: CopilotResponse[]) => {
+    setCopilotRequests([]);
     await doNext({
       type: "copilot",
-      response: copilotResponse,
+      responses: copilotResponses,
     });
   };
 
@@ -138,7 +141,7 @@ export const useAgent = () => {
     messages,
     currentActor,
     unprocessedToolCalls,
-    copilotRequest,
+    copilotRequests,
     submitAgent,
     finishCopilotRequest,
     stop,

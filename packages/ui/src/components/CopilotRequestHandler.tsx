@@ -4,8 +4,7 @@ import type {
   CopilotStatus,
   ModelMessage,
 } from "core";
-import type React from "react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   countOccurrences,
   getContextualDisplay,
@@ -24,24 +23,36 @@ import { cn } from "@/lib/utils";
 import { Input } from "./ui/input";
 
 type CopilotRequestHandlerProps = {
-  copilotRequest: CopilotRequest;
-  onFinish: (copilotResponse: CopilotResponse) => Promise<void>;
+  copilotRequests: CopilotRequest[];
+  onFinish: (copilotResponses: CopilotResponse[]) => Promise<void>;
   messages: ModelMessage[];
 };
 
 export const CopilotRequestHandler = ({
-  copilotRequest,
+  copilotRequests,
   onFinish,
   messages,
 }: CopilotRequestHandlerProps) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [responses, setResponses] = useState<CopilotResponse[]>([]);
   const [invalid, setInvalid] = useState("");
   const [status, setStatus] = useState<CopilotStatus>("approve");
-  const [translatedString, setTranslatedString] = useState(
-    copilotRequest.translate_string
-  );
+  const [translatedString, setTranslatedString] = useState("");
   const [rejectReason, setRejectReason] = useState("");
 
+  const copilotRequest = copilotRequests[currentIndex];
+
   const { currentFile, currentTranslation } = useTranslationState(messages);
+
+  // Initialize translated string when copilotRequest changes
+  useEffect(() => {
+    if (copilotRequest) {
+      setTranslatedString(copilotRequest.translate_string);
+      setStatus("approve");
+      setRejectReason("");
+      setInvalid("");
+    }
+  }, [copilotRequest]);
 
   useEffect(() => {
     if (!currentFile) {
@@ -62,15 +73,33 @@ export const CopilotRequestHandler = ({
     }
   }, [currentFile, copilotRequest]);
 
+  const handleResponse = useCallback(
+    async (response: CopilotResponse) => {
+      const updatedResponses = [...responses, response];
+      setResponses(updatedResponses);
+
+      // Check if there are more requests to process
+      if (currentIndex < copilotRequests.length - 1) {
+        setCurrentIndex(currentIndex + 1);
+      } else {
+        // All requests processed, call onFinish with all responses
+        await onFinish(updatedResponses);
+      }
+    },
+    [responses, currentIndex, copilotRequests.length, onFinish]
+  );
+
   useEffect(() => {
     if (invalid) {
-      onFinish({
+      const response: CopilotResponse = {
+        tool: copilotRequest.tool,
         status: "reject",
         translated_string: "",
         reason: invalid,
-      });
+      };
+      handleResponse(response);
     }
-  }, [invalid, onFinish]);
+  }, [invalid, copilotRequest, handleResponse]);
 
   if (!currentFile) {
     return <div className="text-red-500">No file selected</div>;
@@ -90,6 +119,11 @@ export const CopilotRequestHandler = ({
 
   return (
     <div className="flex flex-col h-full gap-2">
+      {copilotRequests.length > 1 && (
+        <div className="text-sm text-gray-600 font-medium">
+          Processing {currentIndex + 1} of {copilotRequests.length} requests
+        </div>
+      )}
       <div className="flex gap-1 flex-1">
         <pre className="border border-solid w-1/2 flex flex-col p-2 rounded-lg wrap-break-word whitespace-break-spaces">
           {contextDisplay.beforeText && (
@@ -163,7 +197,8 @@ export const CopilotRequestHandler = ({
         </div>
         <Button
           onClick={() => {
-            onFinish({
+            handleResponse({
+              tool: copilotRequest.tool,
               status,
               translated_string: translatedString,
               reason: status === "reject" ? rejectReason : "",

@@ -1,14 +1,14 @@
-import React from "react";
-import { render, Box, useInput } from "ink";
 import { metricsSdk } from "core";
-import { Hello } from "./components/Hello.js";
+import { Box, render, useInput } from "ink";
+import React from "react";
 import { CopilotRequestHandler } from "./components/CopilotRequestHandler.js";
-import { UserInputArea } from "./components/UserInputArea.js";
+import { Command } from "./components/commands/Command.js";
+import { Hello } from "./components/Hello.js";
 import { MessagesList } from "./components/MessageList.js";
+import { UserInputArea } from "./components/UserInputArea.js";
 import { useAgent } from "./hooks/use-agent.js";
 import { useEditor } from "./hooks/use-editor.js";
 import { useUserInput } from "./hooks/use-user-input.js";
-import { Command } from "./components/commands/Command.js";
 
 metricsSdk.start();
 
@@ -24,9 +24,8 @@ const TUIApp = () => {
     stop,
 
     // copilot interactions
-    copilotRequest,
+    copilotRequests,
     finishCopilotRequest,
-    copilotResolverRef,
   } = useAgent();
 
   const { isEditing, withEditor } = useEditor();
@@ -53,11 +52,10 @@ const TUIApp = () => {
     return null;
   }
 
-  if (copilotRequest) {
+  if (copilotRequests.length > 0) {
     return (
       <CopilotRequestHandler
-        copilotRequest={copilotRequest}
-        copilotResolverRef={copilotResolverRef}
+        copilotRequests={copilotRequests}
         withEditor={withEditor}
         onFinish={finishCopilotRequest}
         messages={messages}

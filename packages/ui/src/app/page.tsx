@@ -18,14 +18,14 @@ const Inner = () => {
     stop,
 
     // copilot interactions
-    copilotRequest,
+    copilotRequests,
     finishCopilotRequest,
   } = useAgent();
 
-  if (copilotRequest) {
+  if (copilotRequests.length > 0) {
     return (
       <CopilotRequestHandler
-        copilotRequest={copilotRequest}
+        copilotRequests={copilotRequests}
         messages={messages}
         onFinish={finishCopilotRequest}
       />

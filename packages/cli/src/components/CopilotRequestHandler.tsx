@@ -2,8 +2,7 @@ import { Select } from "@inkjs/ui";
 import type { CopilotRequest, CopilotResponse, ModelMessage } from "core";
 import { edit } from "external-editor";
 import { Box, Text } from "ink";
-import React from "react";
-import { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   countOccurrences,
   getContextualDisplay,
@@ -11,25 +10,32 @@ import {
 } from "react-shared";
 
 type CopilotRequestHandlerProps = {
-  copilotRequest: CopilotRequest;
-  copilotResolverRef: React.RefObject<
-    null | ((value: CopilotResponse | PromiseLike<CopilotResponse>) => void)
-  >;
+  copilotRequests: CopilotRequest[];
   withEditor: (fn: () => string) => Promise<string>;
-  onFinish: () => void;
+  onFinish: (copilotResponses: CopilotResponse[]) => void;
   messages: ModelMessage[];
 };
 
 export const CopilotRequestHandler = ({
-  copilotRequest,
-  copilotResolverRef,
+  copilotRequests,
   withEditor,
   onFinish,
   messages,
 }: CopilotRequestHandlerProps) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [responses, setResponses] = useState<CopilotResponse[]>([]);
   const [invalid, setInvalid] = useState("");
 
+  const copilotRequest = copilotRequests[currentIndex];
+
   const { currentFile, currentTranslation } = useTranslationState(messages);
+
+  // Initialize state when copilotRequest changes
+  useEffect(() => {
+    if (copilotRequest) {
+      setInvalid("");
+    }
+  }, [copilotRequest]);
 
   useEffect(() => {
     if (!currentFile) {
@@ -50,17 +56,32 @@ export const CopilotRequestHandler = ({
     }
   }, [currentFile, copilotRequest]);
 
+  const handleResponse = useCallback(
+    (response: CopilotResponse) => {
+      const updatedResponses = [...responses, response];
+      setResponses(updatedResponses);
+
+      // Check if there are more requests to process
+      if (currentIndex < copilotRequests.length - 1) {
+        setCurrentIndex(currentIndex + 1);
+      } else {
+        // All requests processed, call onFinish with all responses
+        onFinish(updatedResponses);
+      }
+    },
+    [responses, currentIndex, copilotRequests.length, onFinish]
+  );
+
   useEffect(() => {
     if (invalid) {
-      copilotResolverRef.current?.({
+      handleResponse({
+        tool: copilotRequest.tool,
         status: "reject",
         translated_string: "",
         reason: invalid,
       });
-
-      onFinish();
     }
-  }, [invalid, onFinish, copilotResolverRef.current]);
+  }, [invalid, copilotRequest, handleResponse]);
 
   if (!currentFile) {
     return <Text color="red">No file selected</Text>;
@@ -78,6 +99,13 @@ export const CopilotRequestHandler = ({
 
   return (
     <Box flexDirection="column">
+      {copilotRequests.length > 1 && (
+        <Box marginBottom={1}>
+          <Text color="cyan">
+            Processing {currentIndex + 1} of {copilotRequests.length} requests
+          </Text>
+        </Box>
+      )}
       <Box>
         <Box borderStyle="single" width="50%" flexDirection="column">
           {contextDisplay.beforeText && (
@@ -111,45 +139,44 @@ export const CopilotRequestHandler = ({
           },
         ]}
         onChange={async (value) => {
-          try {
-            switch (value) {
-              case "approve":
-                copilotResolverRef.current?.({
-                  status: "approve",
-                  translated_string: copilotRequest.translate_string,
-                  reason: "",
-                });
-                break;
-              case "reject": {
-                const reason = await withEditor(() =>
-                  edit("# Please provide a reason for rejection:")
-                );
+          switch (value) {
+            case "approve":
+              handleResponse({
+                tool: copilotRequest.tool,
+                status: "approve",
+                translated_string: copilotRequest.translate_string,
+                reason: "",
+              });
+              break;
+            case "reject": {
+              const reason = await withEditor(() =>
+                edit("# Please provide a reason for rejection:")
+              );
 
-                copilotResolverRef.current?.({
-                  status: "reject",
-                  translated_string: "",
-                  reason: reason
-                    .split("\n")
-                    .filter((line) => line.trim() && !line.startsWith("#"))
-                    .join("\n"),
-                });
-                break;
-              }
-              case "refine": {
-                const refined = await withEditor(() =>
-                  edit(copilotRequest.translate_string)
-                );
-                copilotResolverRef.current?.({
-                  status: "refined",
-                  translated_string: refined,
-                  reason: "",
-                });
-                break;
-              }
-              default:
+              handleResponse({
+                tool: copilotRequest.tool,
+                status: "reject",
+                translated_string: "",
+                reason: reason
+                  .split("\n")
+                  .filter((line) => line.trim() && !line.startsWith("#"))
+                  .join("\n"),
+              });
+              break;
             }
-          } finally {
-            onFinish();
+            case "refine": {
+              const refined = await withEditor(() =>
+                edit(copilotRequest.translate_string)
+              );
+              handleResponse({
+                tool: copilotRequest.tool,
+                status: "refined",
+                translated_string: refined,
+                reason: "",
+              });
+              break;
+            }
+            default:
           }
         }}
       />

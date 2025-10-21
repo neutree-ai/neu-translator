@@ -1,13 +1,9 @@
-import { AgentLoop, CopilotResponse, Memory } from "core";
+import { AgentLoop, type CopilotResponse, Memory } from "core";
 import { createRef, useCallback } from "react";
 import { useAgentStore } from "react-shared";
 
 const agentLoopRef = createRef<AgentLoop>();
 agentLoopRef.current = null;
-
-const copilotResolverRef =
-  createRef<(value: CopilotResponse | PromiseLike<CopilotResponse>) => void>();
-copilotResolverRef.current = null;
 
 const runningRef = createRef<boolean>();
 runningRef.current = false;
@@ -30,8 +26,8 @@ export const useAgent = () => {
   const currentActor = useAgentStore((s) => s.currentActor);
   const setCurrentActor = useAgentStore((s) => s.setCurrentActor);
 
-  const copilotRequest = useAgentStore((s) => s.copilotRequest);
-  const setCopilotRequest = useAgentStore((s) => s.setCopilotRequest);
+  const copilotRequests = useAgentStore((s) => s.copilotRequests);
+  const setCopilotRequests = useAgentStore((s) => s.setCopilotRequests);
 
   const initAgentLoop = useCallback(async () => {
     if (!agentLoopRef.current) {
@@ -41,13 +37,6 @@ export const useAgent = () => {
 
       agentLoopRef.current = new AgentLoop({
         abortSignal: abortController.current.signal,
-        copilotHandler: (req) => {
-          setCopilotRequest(req);
-
-          return new Promise((resolve) => {
-            copilotResolverRef.current = resolve;
-          });
-        },
         memory: memoryRef.current!,
       });
 
@@ -57,7 +46,7 @@ export const useAgent = () => {
         process.exit(0);
       });
     }
-  }, [setCopilotRequest]);
+  }, []);
 
   const doNext = useCallback(async () => {
     if (!agentLoopRef.current) {
@@ -68,16 +57,21 @@ export const useAgent = () => {
 
     while (runningRef.current && agentLoopRef.current) {
       try {
-        const { actor, unprocessedToolCalls } =
-          await agentLoopRef.current.next();
-        setCurrentActor(actor);
+        const agentResponse = await agentLoopRef.current.next();
+
+        if (agentResponse.copilotRequests.length > 0) {
+          setCopilotRequests(agentResponse.copilotRequests);
+          break;
+        }
+
+        setCurrentActor(agentResponse.actor);
 
         const newMessages = await agentLoopRef.current.getMessages();
         setMessages(newMessages.slice());
 
-        setUnprocessedToolCalls(unprocessedToolCalls);
+        setUnprocessedToolCalls(agentResponse.unprocessedToolCalls);
 
-        if (actor === "user") {
+        if (agentResponse.actor === "user") {
           break;
         }
       } catch (error) {
@@ -91,7 +85,13 @@ export const useAgent = () => {
         break;
       }
     }
-  }, [initAgentLoop, setCurrentActor, setMessages, setUnprocessedToolCalls]);
+  }, [
+    initAgentLoop,
+    setCurrentActor,
+    setMessages,
+    setUnprocessedToolCalls,
+    setCopilotRequests,
+  ]);
 
   const submitAgent = async (input: string) => {
     runningRef.current = true;
@@ -120,9 +120,11 @@ export const useAgent = () => {
     await doNext();
   };
 
-  const finishCopilotRequest = () => {
-    setCopilotRequest(null);
-    copilotResolverRef.current = null;
+  const finishCopilotRequest = async (copilotResponses: CopilotResponse[]) => {
+    setCopilotRequests([]);
+    agentLoopRef.current?.addCopilotResponses(copilotResponses);
+
+    await doNext();
   };
 
   const stop = () => {
@@ -144,8 +146,7 @@ export const useAgent = () => {
     currentActor,
     unprocessedToolCalls,
     submitAgent,
-    copilotRequest,
-    copilotResolverRef,
+    copilotRequests,
     finishCopilotRequest,
     stop,
     memoryRef: memoryRef,

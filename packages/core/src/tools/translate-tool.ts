@@ -28,7 +28,7 @@ const outputSchema = z.object({
   status: z
     .string()
     .describe(
-      "The status of human review, one of 'approve', 'reject', or 'refined'",
+      "The status of human review, one of 'approve', 'reject', or 'refined'"
     ),
   reason: z.string().describe("The reason for the status, if applicable"),
 });
@@ -43,39 +43,49 @@ export const translateTool = tool({
 export const translateExecutor: ToolExecutor<
   z.infer<typeof inputSchema>,
   z.infer<typeof outputSchema>
-> = async (input, options): Promise<z.infer<typeof outputSchema>> => {
+> = async (input, options, copilotResponse) => {
   // check length
   if (input.src_string.length > 300) {
     return {
-      translated_string: "",
-      status: "reject",
-      reason: "Source string exceeds maximum length of 300 characters",
+      type: "tool-result",
+      payload: {
+        translated_string: "",
+        status: "reject",
+        reason: "Source string exceeds maximum length of 300 characters",
+      },
     };
   }
 
-  if (!options.copilotHandler) {
-    // auto approve
+  const copilotReq = {
+    tool: {
+      name: options.name,
+      callId: options.callId,
+    },
+    ...input,
+  };
+
+  if (!copilotResponse) {
     return {
-      translated_string: input.translate_string,
-      status: "approve",
-      reason: "",
+      type: "copilot-request",
+      payload: copilotReq,
     };
   }
 
-  const res = await options.copilotHandler(input);
-
-  const { translated_string, status, reason } = res;
+  const { translated_string, status, reason } = copilotResponse;
 
   if (status !== "approve" && options.memory) {
     await options.memory.extractMemory({
-      req: input,
-      res,
+      req: copilotReq,
+      res: copilotResponse,
     });
   }
 
   return {
-    translated_string,
-    status,
-    reason,
+    type: "tool-result",
+    payload: {
+      translated_string,
+      status,
+      reason,
+    },
   };
 };

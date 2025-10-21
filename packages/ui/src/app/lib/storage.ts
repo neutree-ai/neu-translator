@@ -3,6 +3,7 @@ import type { Context } from "core";
 type Session = {
   id: string;
   messages: Context["messages"];
+  copilotResponses: Context["copilotResponses"];
 };
 
 const uuid = () => {
@@ -20,6 +21,7 @@ export class SessionManager {
     const session = {
       id: uuid(),
       messages: [],
+      copilotResponses: [],
     };
 
     this.sessions.push(session);
@@ -35,6 +37,13 @@ export class SessionManager {
     const session = this.getSession(id);
     if (session) {
       session.messages.push(...messages);
+    }
+  }
+
+  addCopilotResponses(id: string, responses: Context["copilotResponses"]) {
+    const session = this.getSession(id);
+    if (session) {
+      session.copilotResponses.push(...responses);
     }
   }
 }

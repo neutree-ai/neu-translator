@@ -1,4 +1,4 @@
-import type { ModelMessage, ToolCallPart, CopilotRequest } from "core";
+import type { CopilotRequest, ModelMessage, ToolCallPart } from "core";
 import { create } from "zustand";
 
 type Actor = "user" | "agent";
@@ -14,8 +14,8 @@ type AgentState = {
   currentActor: Actor;
   setCurrentActor: (v: Actor) => void;
 
-  copilotRequest: CopilotRequest | null;
-  setCopilotRequest: (v: CopilotRequest | null) => void;
+  copilotRequests: CopilotRequest[];
+  setCopilotRequests: (v: CopilotRequest[]) => void;
 };
 
 export const useAgentStore = create<AgentState>((set) => ({
@@ -32,6 +32,6 @@ export const useAgentStore = create<AgentState>((set) => ({
   currentActor: "user",
   setCurrentActor: (v) => set({ currentActor: v }),
 
-  copilotRequest: null,
-  setCopilotRequest: (v) => set({ copilotRequest: v }),
+  copilotRequests: [],
+  setCopilotRequests: (v) => set({ copilotRequests: v }),
 }));

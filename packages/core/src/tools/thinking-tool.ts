@@ -22,6 +22,9 @@ export const thinkingTool = tool({
 export const thinkingExecutor: ToolExecutor<
   z.infer<typeof inputSchema>,
   z.infer<typeof outputSchema>
-> = async (input, options): Promise<z.infer<typeof outputSchema>> => {
-  return { status: `done` };
+> = async (input, options) => {
+  return {
+    type: "tool-result",
+    payload: { status: `done` },
+  };
 };

@@ -2,37 +2,53 @@ import type { JSONValue } from "ai";
 import type { Memory } from "./memory.js";
 
 export {
-  ModelMessage,
-  UserModelMessage,
   AssistantModelMessage,
-  ToolModelMessage,
+  FinishReason,
+  ModelMessage,
   SystemModelMessage,
   ToolCallPart,
-  FinishReason,
+  ToolModelMessage,
+  UserModelMessage,
 } from "ai";
 
 export type AgentLoopOptions = {
   abortSignal?: AbortSignal;
-  copilotHandler?: (request: CopilotRequest) => Promise<CopilotResponse>;
   memory?: Memory;
+};
+
+export type ToolCallOptions = {
+  name: string;
+  callId: string;
 };
 
 export type NextActor = "user" | "agent";
 
-export type ToolExecutor<T = any, U = JSONValue> = (
-  input: T,
-  options: AgentLoopOptions
-) => Promise<U>;
+export type ToolExecutor<TInput = any, UOutput = JSONValue> = (
+  input: TInput,
+  options: AgentLoopOptions & ToolCallOptions,
+  copilotResponse?: CopilotResponse
+) => Promise<
+  | {
+      type: "copilot-request";
+      payload: CopilotRequest;
+    }
+  | {
+      type: "tool-result";
+      payload: UOutput;
+    }
+>;
 
 export type CopilotStatus = "approve" | "reject" | "refined";
 
 export type CopilotRequest = {
+  tool: ToolCallOptions;
   src_string: string;
   translate_string: string;
   file_id: string;
 };
 
 export type CopilotResponse = {
+  tool: ToolCallOptions;
   status: CopilotStatus;
   translated_string: string;
   reason: string;

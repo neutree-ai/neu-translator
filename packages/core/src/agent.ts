@@ -7,14 +7,20 @@ import {
   type ToolSet,
   type UserModelMessage,
 } from "ai";
-import { models } from "./llm.js";
 import { Context } from "./context.js";
-import type { AgentLoopOptions, NextActor, ToolExecutor } from "./types.js";
+import { models } from "./llm.js";
 import { SYSTEM_WORKFLOW } from "./prompts/system.workflow.js";
-import { translateExecutor, translateTool } from "./tools/translate-tool.js";
 import { lsExecutor, lsTool } from "./tools/ls-tool.js";
 import { readExecutor, readTool } from "./tools/read-tool.js";
 import { thinkingExecutor, thinkingTool } from "./tools/thinking-tool.js";
+import { translateExecutor, translateTool } from "./tools/translate-tool.js";
+import type {
+  AgentLoopOptions,
+  CopilotRequest,
+  CopilotResponse,
+  NextActor,
+  ToolExecutor,
+} from "./types.js";
 
 export class AgentLoop {
   private options: AgentLoopOptions;
@@ -42,17 +48,29 @@ export class AgentLoop {
   public async next(): Promise<{
     actor: NextActor;
     unprocessedToolCalls: ToolCallPart[];
+    copilotRequests: CopilotRequest[];
     messages: ModelMessage[];
     finishReason?: FinishReason;
   }> {
-    const { messages, actor, finishReason } = await this._next();
+    const { messages, actor, finishReason, copilotRequests } =
+      await this._next();
     this.context.addMessages(messages);
     const unprocessedToolCalls = await this.getUnprocessedToolCalls();
-    return { actor, unprocessedToolCalls, messages, finishReason };
+    return {
+      actor,
+      unprocessedToolCalls,
+      messages,
+      finishReason,
+      copilotRequests,
+    };
   }
 
   public async userInput(messages: UserModelMessage[]) {
     this.context.addMessages(messages);
+  }
+
+  public async addCopilotResponses(responses: CopilotResponse[]) {
+    this.context.addCopilotResponses(responses);
   }
 
   public async getMessages(): Promise<ModelMessage[]> {
@@ -65,6 +83,7 @@ export class AgentLoop {
 
   private async _next(): Promise<{
     messages: ModelMessage[];
+    copilotRequests: CopilotRequest[];
     actor: NextActor;
     finishReason?: FinishReason;
   }> {
@@ -74,23 +93,60 @@ export class AgentLoop {
     if (modelMessages.length === 0) {
       return {
         messages: [],
+        copilotRequests: [],
         actor: "user",
       };
     }
 
     const unprocessedToolCalls = await this.getUnprocessedToolCalls();
     if (unprocessedToolCalls.length > 0) {
+      const copilotResponseMap = this.context
+        .getCopilotResponses(unprocessedToolCalls.map((tc) => tc.toolCallId))
+        .reduce((map, resp) => {
+          const toolCallId = resp.tool.callId;
+          map[toolCallId] = resp;
+          return map;
+        }, {} as Partial<Record<string, CopilotResponse>>);
+
       const toolResults = await Promise.all(
-        unprocessedToolCalls.map((call) => this.executeTool(call)),
+        unprocessedToolCalls.map((call) => {
+          return this.executeTool(call, copilotResponseMap[call.toolCallId]);
+        })
       );
+
+      const toolResultParts: ToolResultPart[] = [];
+      const copilotRequests: CopilotRequest[] = [];
+      for (const result of toolResults) {
+        if (result.type === "tool-result-part") {
+          toolResultParts.push(result.payload);
+        } else {
+          copilotRequests.push(result.payload);
+        }
+      }
+
+      if (copilotRequests.length > 0) {
+        /**
+         * Currently, we return copilot requests in a separate iteration,
+         * and keep the actor to be 'agent'.
+         * We think this makes the client side easier to handle iteration
+         * result.
+         * But it could be changed if we find better semantic.
+         */
+        return {
+          messages: [],
+          copilotRequests,
+          actor: "agent",
+        };
+      }
 
       return {
         messages: [
           {
             role: "tool",
-            content: toolResults,
+            content: toolResultParts,
           },
         ],
+        copilotRequests: [],
         actor: "agent",
       };
     }
@@ -109,6 +165,7 @@ export class AgentLoop {
     if (!response.messages.length) {
       return {
         messages: [],
+        copilotRequests: [],
         actor: "user",
         finishReason,
       };
@@ -138,6 +195,7 @@ export class AgentLoop {
 
         return m;
       }),
+      copilotRequests: [],
       actor,
       finishReason,
     };
@@ -170,20 +228,49 @@ export class AgentLoop {
     return Object.values(parts);
   }
 
-  private async executeTool(part: ToolCallPart): Promise<ToolResultPart> {
-    const input = part.input as any;
+  private async executeTool(
+    part: ToolCallPart,
+    copilotResponse?: CopilotResponse
+  ): Promise<
+    | {
+        type: "tool-result-part";
+        payload: ToolResultPart;
+      }
+    | {
+        type: "copilot-request";
+        payload: CopilotRequest;
+      }
+  > {
+    const input = part.input;
     if (!this.toolExecutors[part.toolName]) {
       throw new Error(`Tool executor not found for: ${part.toolName}`);
     }
-    const result = await this.toolExecutors[part.toolName](input, this.options);
+
+    const options = {
+      ...this.options,
+      name: part.toolName,
+      callId: part.toolCallId,
+    };
+    const result = await this.toolExecutors[part.toolName](
+      input,
+      options,
+      copilotResponse
+    );
+
+    if (result.type === "copilot-request") {
+      return result;
+    }
 
     return {
-      type: "tool-result",
-      toolCallId: part.toolCallId,
-      toolName: part.toolName,
-      output: {
-        type: "json",
-        value: result,
+      type: "tool-result-part",
+      payload: {
+        type: "tool-result",
+        toolCallId: part.toolCallId,
+        toolName: part.toolName,
+        output: {
+          type: "json",
+          value: result.payload,
+        },
       },
     };
   }
