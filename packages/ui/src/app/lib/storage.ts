@@ -46,4 +46,8 @@ export class SessionManager {
       session.copilotResponses.push(...responses);
     }
   }
+
+  listSessions() {
+    return this.sessions;
+  }
 }

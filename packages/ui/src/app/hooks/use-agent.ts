@@ -1,5 +1,5 @@
 import type { CopilotResponse } from "core";
-import { createRef } from "react";
+import { createRef, useEffect } from "react";
 import { useAgentStore } from "react-shared";
 import type { AgentResponse } from "../api/next/route";
 
@@ -14,13 +14,14 @@ abortController.current = null;
 
 // TODO: port memory
 
-export const useAgent = () => {
+export const useAgent = (initialSessionId?: string) => {
   const messages = useAgentStore((s) => s.messages);
   const addMessages = useAgentStore((s) => s.addMessages);
+  const setMessages = useAgentStore((s) => s.setMessages);
 
   const unprocessedToolCalls = useAgentStore((s) => s.unprocessedToolCalls);
   const setUnprocessedToolCalls = useAgentStore(
-    (s) => s.setUnprocessedToolCalls
+    (s) => s.setUnprocessedToolCalls,
   );
 
   const currentActor = useAgentStore((s) => s.currentActor);
@@ -32,7 +33,7 @@ export const useAgent = () => {
   const doNext = async (
     params:
       | { type: "userInput"; input: string }
-      | { type: "copilot"; responses: CopilotResponse[] }
+      | { type: "copilot"; responses: CopilotResponse[] },
   ) => {
     setCurrentActor("agent");
 
@@ -63,7 +64,7 @@ export const useAgent = () => {
             res.json() as Promise<{
               sessionId: string;
               agentResponse: AgentResponse;
-            }>
+            }>,
         );
 
         round++;
@@ -135,6 +136,41 @@ export const useAgent = () => {
     setCurrentActor("user");
   };
 
+  const loadSession = async (sessionId: string) => {
+    try {
+      const response = await fetch(`/api/sessions/${sessionId}`);
+      if (!response.ok) {
+        console.error("Failed to load session:", sessionId);
+        return;
+      }
+      const data = await response.json();
+      const session = data.session;
+
+      sessionIdRef.current = sessionId;
+      setMessages(session.messages);
+      setCurrentActor("user");
+      setUnprocessedToolCalls([]);
+      setCopilotRequests([]);
+    } catch (error) {
+      console.error("Error loading session:", error);
+    }
+  };
+
+  const resetSession = () => {
+    sessionIdRef.current = null;
+    setMessages([]);
+    setCurrentActor("user");
+    setUnprocessedToolCalls([]);
+    setCopilotRequests([]);
+  };
+
+  // biome-ignore lint: by design
+  useEffect(() => {
+    if (initialSessionId) {
+      loadSession(initialSessionId);
+    }
+  }, [initialSessionId]);
+
   // TODO: port compact
 
   return {
@@ -145,5 +181,7 @@ export const useAgent = () => {
     submitAgent,
     finishCopilotRequest,
     stop,
+    loadSession,
+    resetSession,
   };
 };

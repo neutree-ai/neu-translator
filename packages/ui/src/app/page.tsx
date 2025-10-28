@@ -3,10 +3,16 @@
 import { CopilotRequestHandler } from "@/components/CopilotRequestHandler";
 import Hello from "@/components/Hello";
 import { MessageList } from "@/components/MessageList";
+import { SessionSidebar } from "@/components/SessionSidebar";
 import { UserInputArea } from "@/components/UserInputArea";
+import { useState } from "react";
 import { useAgent } from "./hooks/use-agent";
 
 const Inner = () => {
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
+    null
+  );
+
   const {
     // agent state
     messages,
@@ -20,7 +26,20 @@ const Inner = () => {
     // copilot interactions
     copilotRequests,
     finishCopilotRequest,
+
+    // session management
+    loadSession,
+    resetSession,
   } = useAgent();
+
+  const handleSelectSession = (sessionId: string | null) => {
+    setSelectedSessionId(sessionId);
+    if (sessionId === null) {
+      resetSession();
+    } else {
+      loadSession(sessionId);
+    }
+  };
 
   if (copilotRequests.length > 0) {
     return (
@@ -35,32 +54,38 @@ const Inner = () => {
   // TODO: port command
 
   return (
-    <div className="flex flex-col h-full">
-      {messages.length === 0 ? (
-        <div className="flex-1">
-          <Hello />
-        </div>
-      ) : (
-        <MessageList
-          messages={messages}
-          currentActor={currentActor}
-          unprocessedToolCalls={unprocessedToolCalls}
-        />
-      )}
-
-      <UserInputArea
-        currentActor={currentActor}
-        onSubmit={submitAgent}
-        unprocessedToolCalls={unprocessedToolCalls}
-        stop={stop}
+    <>
+      <SessionSidebar
+        currentSessionId={selectedSessionId}
+        onSelectSession={handleSelectSession}
       />
-    </div>
+      <div className="flex flex-col h-full flex-1">
+        {messages.length === 0 ? (
+          <div className="flex-1">
+            <Hello />
+          </div>
+        ) : (
+          <MessageList
+            messages={messages}
+            currentActor={currentActor}
+            unprocessedToolCalls={unprocessedToolCalls}
+          />
+        )}
+
+        <UserInputArea
+          currentActor={currentActor}
+          onSubmit={submitAgent}
+          unprocessedToolCalls={unprocessedToolCalls}
+          stop={stop}
+        />
+      </div>
+    </>
   );
 };
 
 const App = () => {
   return (
-    <div className="max-w-6xl mx-auto p-6 relative size-full h-screen">
+    <div className="flex h-screen">
       <Inner />
     </div>
   );
