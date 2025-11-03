@@ -37,33 +37,25 @@ class LLMModels:
     def create_chat_completion(self, model: str, messages: list, **kwargs):
         """Create a chat completion using the specified model."""
         return self.client.chat.completions.create(
-            model=model,
-            messages=messages,
-            **kwargs
+            model=model, messages=messages, **kwargs
         )
 
     def translator(self, messages: list, **kwargs):
         """Use the translator model (main agent model)."""
         return self.create_chat_completion(
-            model=self.translator_model,
-            messages=messages,
-            **kwargs
+            model=self.translator_model, messages=messages, **kwargs
         )
 
     def memory(self, messages: list, **kwargs):
         """Use the memory extraction model."""
         return self.create_chat_completion(
-            model=self.memory_model,
-            messages=messages,
-            **kwargs
+            model=self.memory_model, messages=messages, **kwargs
         )
 
     def compactor(self, messages: list, **kwargs):
         """Use the message compaction model."""
         return self.create_chat_completion(
-            model=self.compactor_model,
-            messages=messages,
-            **kwargs
+            model=self.compactor_model, messages=messages, **kwargs
         )
 
 

@@ -20,10 +20,10 @@ def parse_analysis_summary(text: str) -> Dict[str, str]:
         Dictionary with 'analysis' and 'summary' keys
     """
     analysis_match = re.search(
-        r'<analysis>(.*?)</analysis>', text, re.DOTALL | re.IGNORECASE
+        r"<analysis>(.*?)</analysis>", text, re.DOTALL | re.IGNORECASE
     )
     summary_match = re.search(
-        r'<summary>(.*?)</summary>', text, re.DOTALL | re.IGNORECASE
+        r"<summary>(.*?)</summary>", text, re.DOTALL | re.IGNORECASE
     )
 
     analysis = analysis_match.group(1).strip() if analysis_match else ""
@@ -42,13 +42,9 @@ class Context:
 
     def __init__(self, messages: List[Dict[str, Any]] = None):
         """Initialize context with optional initial messages."""
-        self.messages: List[Dict[str, Any]] = (
-            messages.copy() if messages else []
-        )
+        self.messages: List[Dict[str, Any]] = messages.copy() if messages else []
         self.copilot_responses: List[Dict[str, Any]] = []
-        self.active_messages: List[Dict[str, Any]] = (
-            messages.copy() if messages else []
-        )
+        self.active_messages: List[Dict[str, Any]] = messages.copy() if messages else []
 
     def add_messages(self, messages: List[Dict[str, Any]]):
         """Add new messages to the context."""

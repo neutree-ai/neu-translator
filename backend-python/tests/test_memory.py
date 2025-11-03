@@ -9,7 +9,7 @@ import tempfile
 import json
 from unittest.mock import Mock, patch
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from core.memory import Memory, MemoryItem, extract_json
 
@@ -55,10 +55,8 @@ async def test_memory_init_empty():
 @pytest.mark.asyncio
 async def test_memory_init_with_existing_file():
     """Test initializing memory with existing file."""
-    with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as f:
-        json.dump([
-            {"index": 0, "text": "Test memory", "tags": ["test"]}
-        ], f)
+    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as f:
+        json.dump([{"index": 0, "text": "Test memory", "tags": ["test"]}], f)
         temp_path = f.name
 
     try:
@@ -75,7 +73,7 @@ def test_memory_provide_memory():
     memory = Memory()
     memory.current = [
         MemoryItem(0, "Use formal language", ["style"]),
-        MemoryItem(1, "Translate AI as 人工智能", ["terminology"])
+        MemoryItem(1, "Translate AI as 人工智能", ["terminology"]),
     ]
 
     result = memory.provide_memory()
@@ -103,13 +101,13 @@ def test_extract_json_from_markdown():
 
 def test_extract_json_with_surrounding_text():
     """Test extracting JSON when surrounded by other text."""
-    text = "Here is the result: {\"key\": \"value\"} and that's it."
+    text = 'Here is the result: {"key": "value"} and that\'s it.'
     result = extract_json(text)
     assert result["key"] == "value"
 
 
 @pytest.mark.asyncio
-@patch('core.memory.models')
+@patch("core.memory.models")
 async def test_memory_extract_with_add_operation(mock_models):
     """Test memory extraction with add operation."""
     # Mock LLM response
@@ -123,15 +121,23 @@ async def test_memory_extract_with_add_operation(mock_models):
     ]
     mock_models.memory.return_value = mock_response
 
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.json') as f:
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".json") as f:
         temp_path = f.name
 
     try:
         memory = Memory(temp_path)
         await memory.init()
 
-        req = {"file_id": "test.md", "src_string": "source", "translate_string": "translation"}
-        res = {"status": "reject", "translated_string": "final", "reason": "test reason"}
+        req = {
+            "file_id": "test.md",
+            "src_string": "source",
+            "translate_string": "translation",
+        }
+        res = {
+            "status": "reject",
+            "translated_string": "final",
+            "reason": "test reason",
+        }
 
         await memory.extract_memory(req, res)
 

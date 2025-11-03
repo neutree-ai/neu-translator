@@ -88,9 +88,7 @@ class SessionManager:
         if session:
             session.messages.extend(messages)
 
-    def add_copilot_responses(
-        self, session_id: str, responses: List[Dict[str, Any]]
-    ):
+    def add_copilot_responses(self, session_id: str, responses: List[Dict[str, Any]]):
         """
         Add copilot responses to a session.
 

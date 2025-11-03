@@ -40,9 +40,7 @@ class AgentLoop:
 
         # Store tool definitions and executors
         self.tool_defs = [TOOLS[name]["tool"] for name in TOOLS]
-        self.tool_executors = {
-            name: TOOLS[name]["executor"] for name in TOOLS
-        }
+        self.tool_executors = {name: TOOLS[name]["executor"] for name in TOOLS}
 
     async def next(self) -> Dict[str, Any]:
         """
@@ -208,35 +206,47 @@ class AgentLoop:
 
             # Add text content if present
             if assistant_message.content:
-                content.append({
-                    "type": "text",
-                    "text": assistant_message.content,
-                })
+                content.append(
+                    {
+                        "type": "text",
+                        "text": assistant_message.content,
+                    }
+                )
 
             # Add tool calls if present
             for tool_call in tool_calls:
                 # Generate unique tool call ID
-                tool_call_id = f"{int(time.time() * 1000)}-{random.randint(10000, 99999)}"
+                tool_call_id = (
+                    f"{int(time.time() * 1000)}-{random.randint(10000, 99999)}"
+                )
 
                 # Parse arguments safely
                 try:
-                    args = json.loads(tool_call.function.arguments) if tool_call.function.arguments else {}
+                    args = (
+                        json.loads(tool_call.function.arguments)
+                        if tool_call.function.arguments
+                        else {}
+                    )
                 except json.JSONDecodeError:
                     args = {}
 
-                content.append({
-                    "type": "tool-call",
-                    "toolCallId": tool_call_id,
-                    "toolName": tool_call.function.name,
-                    "args": args,
-                })
+                content.append(
+                    {
+                        "type": "tool-call",
+                        "toolCallId": tool_call_id,
+                        "toolName": tool_call.function.name,
+                        "args": args,
+                    }
+                )
 
             # Add assistant message if there's content
             if content:
-                response_messages.append({
-                    "role": "assistant",
-                    "content": content,
-                })
+                response_messages.append(
+                    {
+                        "role": "assistant",
+                        "content": content,
+                    }
+                )
 
             # Determine next actor
             if tool_calls:
@@ -363,10 +373,16 @@ class AgentLoop:
 
             # Handle different message types
             if role == "user":
-                api_messages.append({
-                    "role": "user",
-                    "content": content if isinstance(content, str) else self._format_content(content),
-                })
+                api_messages.append(
+                    {
+                        "role": "user",
+                        "content": (
+                            content
+                            if isinstance(content, str)
+                            else self._format_content(content)
+                        ),
+                    }
+                )
 
             elif role == "assistant":
                 # Check if content contains tool calls
@@ -395,21 +411,25 @@ class AgentLoop:
 
                     api_messages.append(msg)
                 else:
-                    api_messages.append({
-                        "role": "assistant",
-                        "content": content,
-                    })
+                    api_messages.append(
+                        {
+                            "role": "assistant",
+                            "content": content,
+                        }
+                    )
 
             elif role == "tool":
                 # Convert tool results
                 if isinstance(content, list):
                     for part in content:
                         if part.get("type") == "tool-result":
-                            api_messages.append({
-                                "role": "tool",
-                                "tool_call_id": part["toolCallId"],
-                                "content": str(part.get("result", "")),
-                            })
+                            api_messages.append(
+                                {
+                                    "role": "tool",
+                                    "tool_call_id": part["toolCallId"],
+                                    "content": str(part.get("result", "")),
+                                }
+                            )
 
         return api_messages
 

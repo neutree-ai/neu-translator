@@ -14,7 +14,7 @@ from .prompts import SYSTEM_MEMORY
 def extract_json(text: str) -> Dict[str, Any]:
     """Extract JSON from text, handling markdown code blocks."""
     # Try to extract JSON from markdown code blocks
-    json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', text, re.DOTALL)
+    json_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
     if json_match:
         return json.loads(json_match.group(1))
 
@@ -23,7 +23,7 @@ def extract_json(text: str) -> Dict[str, Any]:
         return json.loads(text)
     except json.JSONDecodeError:
         # Try to find JSON object in text
-        json_match = re.search(r'\{.*\}', text, re.DOTALL)
+        json_match = re.search(r"\{.*\}", text, re.DOTALL)
         if json_match:
             return json.loads(json_match.group(0))
         raise ValueError("No valid JSON found in text")
@@ -73,9 +73,7 @@ class Memory:
             print(f"Failed to load memory: {error}")
             self.current = []
 
-    async def extract_memory(
-        self, req: Dict[str, Any], res: Dict[str, Any]
-    ):
+    async def extract_memory(self, req: Dict[str, Any], res: Dict[str, Any]):
         """
         Extract memory from copilot request/response pair.
 

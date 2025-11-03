@@ -115,9 +115,7 @@ async def api_next(request: NextRequest):
         # Handle copilot responses
         if request.copilotResponses:
             await session.agent.add_copilot_responses(request.copilotResponses)
-            session_manager.add_copilot_responses(
-                session_id, request.copilotResponses
-            )
+            session_manager.add_copilot_responses(session_id, request.copilotResponses)
 
         # Execute agent loop iteration
         result = await session.agent.next()
@@ -143,6 +141,7 @@ async def api_next(request: NextRequest):
     except Exception as error:
         print(f"Error in /api/next: {error}")
         import traceback
+
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(error))
 

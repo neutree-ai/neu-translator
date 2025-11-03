@@ -6,7 +6,7 @@ import pytest
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from core.context import Context, parse_analysis_summary
 
@@ -20,9 +20,7 @@ def test_context_creation_empty():
 
 def test_context_creation_with_messages():
     """Test creating context with initial messages."""
-    messages = [
-        {"role": "user", "content": "Hello"}
-    ]
+    messages = [{"role": "user", "content": "Hello"}]
     context = Context(messages)
     assert len(context.get_messages()) == 1
     assert context.get_messages()[0]["role"] == "user"
@@ -33,7 +31,7 @@ def test_context_add_messages():
     context = Context()
     messages = [
         {"role": "user", "content": "Hello"},
-        {"role": "assistant", "content": "Hi"}
+        {"role": "assistant", "content": "Hi"},
     ]
     context.add_messages(messages)
     assert len(context.get_messages()) == 2
@@ -42,9 +40,7 @@ def test_context_add_messages():
 def test_context_add_copilot_responses():
     """Test adding copilot responses."""
     context = Context()
-    responses = [
-        {"tool_call_id": "id1", "status": "approve"}
-    ]
+    responses = [{"tool_call_id": "id1", "status": "approve"}]
     context.add_copilot_responses(responses)
 
     # Should be able to retrieve them
@@ -59,7 +55,7 @@ def test_context_get_copilot_responses_filtering():
     responses = [
         {"tool_call_id": "id1", "status": "approve"},
         {"tool_call_id": "id2", "status": "reject"},
-        {"tool_call_id": "id3", "status": "refined"}
+        {"tool_call_id": "id3", "status": "refined"},
     ]
     context.add_copilot_responses(responses)
 
@@ -109,7 +105,7 @@ def test_context_to_model_messages():
     """Test converting context to model messages."""
     messages = [
         {"role": "user", "content": "Hello"},
-        {"role": "assistant", "content": "Hi there"}
+        {"role": "assistant", "content": "Hi there"},
     ]
     context = Context(messages)
     model_messages = context.to_model_messages()

@@ -23,7 +23,9 @@ def SYSTEM_MEMORY(req: Dict[str, Any], res: Dict[str, Any], current_memory: str)
 
     reject_section = ""
     if status == "reject":
-        reject_section = f"""User rejected the LLM output. Reason: {res.get('reason', '')}"""
+        reject_section = (
+            f"""User rejected the LLM output. Reason: {res.get('reason', '')}"""
+        )
 
     return f"""
 You are a memory engine that extracts durable user preferences from the current feedback
