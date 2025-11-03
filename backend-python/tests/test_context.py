@@ -3,6 +3,11 @@ Tests for the Context management system.
 """
 
 import pytest
+import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
 from core.context import Context, parse_analysis_summary
 
 

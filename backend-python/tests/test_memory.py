@@ -4,8 +4,13 @@ Tests for the Memory system.
 
 import pytest
 import os
+import sys
 import tempfile
 import json
+from unittest.mock import Mock, patch
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
 from core.memory import Memory, MemoryItem, extract_json
 
 
@@ -101,3 +106,38 @@ def test_extract_json_with_surrounding_text():
     text = "Here is the result: {\"key\": \"value\"} and that's it."
     result = extract_json(text)
     assert result["key"] == "value"
+
+
+@pytest.mark.asyncio
+@patch('core.memory.models')
+async def test_memory_extract_with_add_operation(mock_models):
+    """Test memory extraction with add operation."""
+    # Mock LLM response
+    mock_response = Mock()
+    mock_response.choices = [
+        Mock(
+            message=Mock(
+                content='{"ops": [{"action": "add", "index": -1, "text": "New preference", "tags": ["preference"]}]}'
+            )
+        )
+    ]
+    mock_models.memory.return_value = mock_response
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.json') as f:
+        temp_path = f.name
+
+    try:
+        memory = Memory(temp_path)
+        await memory.init()
+
+        req = {"file_id": "test.md", "src_string": "source", "translate_string": "translation"}
+        res = {"status": "reject", "translated_string": "final", "reason": "test reason"}
+
+        await memory.extract_memory(req, res)
+
+        # Check that memory was added
+        assert len(memory.current) == 1
+        assert memory.current[0].text == "New preference"
+    finally:
+        if os.path.exists(temp_path):
+            os.unlink(temp_path)

@@ -4,6 +4,13 @@ Tests for the FastAPI endpoints.
 
 import pytest
 from fastapi.testclient import TestClient
+from unittest.mock import patch, Mock
+
+# Import app
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
 from api.main import app
 
 client = TestClient(app)
@@ -36,8 +43,27 @@ def test_list_sessions_endpoint():
     assert isinstance(data["sessions"], list)
 
 
-def test_create_new_session():
+@patch('api.session_manager.AgentLoop')
+@patch('api.session_manager.Memory')
+def test_create_new_session(mock_memory, mock_agent):
     """Test creating a new session through /api/next."""
+    # Mock agent.next() to return a simple response
+    mock_agent_instance = Mock()
+    mock_agent_instance.next = Mock(return_value={
+        "actor": "user",
+        "messages": [],
+        "unprocessedToolCalls": [],
+        "copilotRequests": [],
+        "finishReason": "stop"
+    })
+    mock_agent_instance.user_input = Mock()
+    mock_agent.return_value = mock_agent_instance
+
+    # Mock memory
+    mock_memory_instance = Mock()
+    mock_memory_instance.init = Mock()
+    mock_memory.return_value = mock_memory_instance
+
     response = client.post(
         "/api/next",
         json={"userInput": "Hello"}
@@ -55,9 +81,26 @@ def test_get_nonexistent_session():
     assert response.status_code == 404
 
 
-@pytest.mark.asyncio
-async def test_api_next_with_session():
+@patch('api.session_manager.AgentLoop')
+@patch('api.session_manager.Memory')
+def test_api_next_with_session(mock_memory, mock_agent):
     """Test /api/next with existing session."""
+    # Mock agent
+    mock_agent_instance = Mock()
+    mock_agent_instance.next = Mock(return_value={
+        "actor": "user",
+        "messages": [],
+        "unprocessedToolCalls": [],
+        "copilotRequests": [],
+    })
+    mock_agent_instance.user_input = Mock()
+    mock_agent.return_value = mock_agent_instance
+
+    # Mock memory
+    mock_memory_instance = Mock()
+    mock_memory_instance.init = Mock()
+    mock_memory.return_value = mock_memory_instance
+
     # First create a session
     response1 = client.post(
         "/api/next",
@@ -79,8 +122,26 @@ async def test_api_next_with_session():
     assert data["sessionId"] == session_id
 
 
-def test_api_response_structure():
+@patch('api.session_manager.AgentLoop')
+@patch('api.session_manager.Memory')
+def test_api_response_structure(mock_memory, mock_agent):
     """Test that API response has correct structure."""
+    # Mock agent
+    mock_agent_instance = Mock()
+    mock_agent_instance.next = Mock(return_value={
+        "actor": "user",
+        "messages": [],
+        "unprocessedToolCalls": [],
+        "copilotRequests": [],
+    })
+    mock_agent_instance.user_input = Mock()
+    mock_agent.return_value = mock_agent_instance
+
+    # Mock memory
+    mock_memory_instance = Mock()
+    mock_memory_instance.init = Mock()
+    mock_memory.return_value = mock_memory_instance
+
     response = client.post(
         "/api/next",
         json={"userInput": "Test"}

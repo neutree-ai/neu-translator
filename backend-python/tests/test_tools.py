@@ -4,7 +4,11 @@ Tests for the tool implementations.
 
 import pytest
 import os
+import sys
 import tempfile
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
 from core.tools.read_tool import read_executor
 from core.tools.ls_tool import ls_executor
 from core.tools.thinking_tool import thinking_executor
